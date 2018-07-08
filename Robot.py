@@ -62,7 +62,17 @@ class Robot(object):
         else:
             return reversal_reward[self.maze.move_robot(self.action)]
         
-
+    def get_reward_bydirection(self, direction):
+        """
+        get reward by direction
+        """
+        # Random choose action due to action unstability
+        oldloc = self.maze.robot['loc']
+        reward = self.maze.move_robot(direction)
+        self.maze.robot['loc'] = oldloc
+        
+        return reward
+    
     def create_Qtable_line(self, state):
         """
         Create the qtable with the current state
@@ -72,10 +82,10 @@ class Robot(object):
         # Qtable[state] ={'u':xx, 'd':xx, ...}
         # If Qtable[state] already exits, then do
         # not change it.
-        u_reward = self.maze.get_reward_bydirection('u')
-        d_reward = self.maze.get_reward_bydirection('d')
-        r_reward = self.maze.get_reward_bydirection('r')
-        l_reward = self.maze.get_reward_bydirection('l')
+        u_reward = self.get_reward_bydirection('u')
+        d_reward = self.get_reward_bydirection('d')
+        r_reward = self.get_reward_bydirection('r')
+        l_reward = self.get_reward_bydirection('l')
         self.Qtable[state] = {'u':u_reward, 'd':d_reward, 'r':r_reward, 'l':l_reward}
 
     def get_maxreward_action(self, actions_reward):

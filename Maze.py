@@ -32,6 +32,7 @@ class Maze(object):
     def __init__(self, from_file=None, maze_size=None, trap_number=5, unstable_action=False):
         """
         You can construct a map from given file or just generating a random one.
+
         """
         if (from_file is not None) and (maze_size is None):
             with open(from_file, 'rb') as f_in:
@@ -231,7 +232,6 @@ class Maze(object):
         # Random choose action due to action unstability
 
         if not direction in self.valid_actions:
-            print ('direction',direction)
             raise ValueError("Invalid Actions")
 
         if self.unstable_action:
@@ -251,34 +251,7 @@ class Maze(object):
             self.robot['dir'] = direction
             reward = self.reward['hit_wall']
         return reward
-    
-    def get_reward_bydirection(self, direction):
-        """
-        get reward by direction
-        """
-        # Random choose action due to action unstability
 
-        if not direction in self.valid_actions:
-            print ('direction',direction)
-            raise ValueError("Invalid Actions")
-
-        if self.unstable_action:
-            unstable_act = self.action_unstability[direction]
-            direction = np.random.choice(unstable_act.keys(), p=unstable_act.values())
-
-        if self.is_permissible(self.robot['loc'],direction):
-            if self.robot['loc'] == self.destination:
-                reward = self.reward['destination']
-            elif self.robot['loc'] in self.__traps:
-                reward = self.reward['trap']
-            else:
-                reward = self.reward['default']
-        else:
-            reward = self.reward['hit_wall']
-        return reward
-    
-
-    
     def sense_robot(self):
 
         return self.robot['loc']
