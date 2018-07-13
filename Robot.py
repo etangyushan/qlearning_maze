@@ -35,7 +35,11 @@ class Robot(object):
         """
         self.learning = learning
         self.testing = testing
-
+    def down_epsilon(self):
+        if ( self.epsilon > 0):
+            return self.epsilon - 0.1
+        return epsilon0
+    
     def update_parameter(self):
         """
         Some of the paramters of the q learning robot can be altered,
@@ -43,7 +47,7 @@ class Robot(object):
         """
         if self.testing:
             # TODO 1. No random choice when testing
-            self.epsilon = epsilon0
+            self.epsilon = down_epsilon()
         else:
             # TODO 2. Update parameters when learning
             self.epsilon = random.random()
@@ -55,23 +59,7 @@ class Robot(object):
         Get the current state of the robot. In this
         """
         # TODO 3. Return robot's current state
-        reward = self.maze.reward
-        reversal_reward = {v:k for k,v in reward.items()}
-        if self.action == None:
-            return 'default'
-        else:
-            return reversal_reward[self.maze.move_robot(self.action)]
-        
-    def get_reward_bydirection(self, direction):
-        """
-        get reward by direction
-        """
-        # Random choose action due to action unstability
-        oldloc = self.maze.robot['loc']
-        reward = self.maze.move_robot(direction)
-        self.maze.robot['loc'] = oldloc
-        
-        return reward
+        return self.maze.sense_robot()
     
     def create_Qtable_line(self, state):
         """
@@ -82,16 +70,13 @@ class Robot(object):
         # Qtable[state] ={'u':xx, 'd':xx, ...}
         # If Qtable[state] already exits, then do
         # not change it.
-        u_reward = self.get_reward_bydirection('u')
-        d_reward = self.get_reward_bydirection('d')
-        r_reward = self.get_reward_bydirection('r')
-        l_reward = self.get_reward_bydirection('l')
-        self.Qtable[state] = {'u':u_reward, 'd':d_reward, 'r':r_reward, 'l':l_reward}
+ 
+        self.Qtable[state] = {'u':0, 'd':0, 'r':0, 'l':0}
 
-    def get_maxreward_action(self, actions_reward):
-        # print ("actions_reward:", actions_reward)
-        action = max(actions_reward, key=lambda x:actions_reward.get(x))
-        return actions_reward[action]
+    def get_maxreward_action(self, state):
+        # print ("state:", state)
+        reward = max(self.Qtable[state].values())
+        return reward
 
     def choose_action(self):
         """
@@ -102,16 +87,11 @@ class Robot(object):
             # TODO 5. Return whether do random choice
             # hint: generate a random number, and compare
             # it with epsilon
-            randomprob = random.random()
-            if randomprob < self.epsilon:
-                return True
-            else:
-                return False
+            return random.random() < self.epsilon
 
-        actions = self.maze.direction_bit_map
-        # test = random.choice(self.maze.valid_actions)
+        action = max(self.Qtable[self.state].values())
         randomkey = random.randint(0, 3)
-        # print ('actions:', actions)
+        # print ('action:', action)
         # print ('randomkey:', randomkey)
         if self.learning:
             if is_random_exploration():
@@ -119,10 +99,10 @@ class Robot(object):
                 return self.valid_actions[randomkey]
             else:
                 # TODO 7. Return action with highest q value
-                return max(actions, key=lambda x:actions.get(x))
+                return self.valid_actions[action]
         elif self.testing:
             # TODO 7. choose action with highest q value
-            return max(actions, key=lambda x:actions.get(x))
+            return self.valid_actions[action]
         else:
             # TODO 6. Return random choose aciton
             return self.valid_actions[randomkey]
@@ -136,11 +116,11 @@ class Robot(object):
             # to the given rules
             qvalue_state = self.Qtable[self.state][action]
             # print ("qvalue_state:", qvalue_state)
-            maxqvalue_nextstate = self.get_maxreward_action(self.Qtable[next_state])
+            maxqvalue_nextstate = self.get_maxreward_action(next_state)
             # print ("maxqvalue_nextstate:", maxqvalue_nextstate)
             # print ("self.alpha:",self.alpha)
             # print ("self.gamma:",self.gamma)
-            self.Qtable[self.state][action] = (1-self.alpha)*qvalue_state + self.alpha*(r +  self.gamma * maxqvalue_nextstate)
+            self.Qtable[self.state][action] = (1-self.alpha) * qvalue_state + self.alpha * (r + self.gamma * maxqvalue_nextstate)
             
     def update(self):
         """
