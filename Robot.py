@@ -35,10 +35,12 @@ class Robot(object):
         """
         self.learning = learning
         self.testing = testing
+        
     def down_epsilon(self):
         if ( self.epsilon > 0):
-            return self.epsilon - 0.1
-        return epsilon0
+            return self.epsilon - 0.01
+        else:
+            return 0
     
     def update_parameter(self):
         """
@@ -47,10 +49,10 @@ class Robot(object):
         """
         if self.testing:
             # TODO 1. No random choice when testing
-            self.epsilon = down_epsilon()
+            self.epsilon = 0
         else:
             # TODO 2. Update parameters when learning
-            self.epsilon = random.random()
+            self.epsilon = self.down_epsilon()
 
         return self.epsilon
 
@@ -70,13 +72,18 @@ class Robot(object):
         # Qtable[state] ={'u':xx, 'd':xx, ...}
         # If Qtable[state] already exits, then do
         # not change it.
- 
-        self.Qtable[state] = {'u':0, 'd':0, 'r':0, 'l':0}
+        #  print ('1Qtable:',self.Qtable)
+        #  print ('1state:',state)
+        if (self.Qtable):
+            # print('keys:',self.Qtable.keys())
+            if (state not in self.Qtable.keys()):
+                self.Qtable[state] = {'u':0, 'd':0, 'r':0, 'l':0}    
+        else:
+            self.Qtable[state] = {'u':0, 'd':0, 'r':0, 'l':0}
+        #print ('2Qtable:',self.Qtable)
+        #print ('2state:',state)
+        #print ('2Qtable state:',self.Qtable[state])    
 
-    def get_maxreward_action(self, state):
-        # print ("state:", state)
-        reward = max(self.Qtable[state].values())
-        return reward
 
     def choose_action(self):
         """
@@ -88,8 +95,9 @@ class Robot(object):
             # hint: generate a random number, and compare
             # it with epsilon
             return random.random() < self.epsilon
-
-        action = max(self.Qtable[self.state].values())
+        
+        actions = self.Qtable[self.state]
+        action = max(actions, key=lambda x:actions.get(x))
         randomkey = random.randint(0, 3)
         # print ('action:', action)
         # print ('randomkey:', randomkey)
@@ -99,13 +107,29 @@ class Robot(object):
                 return self.valid_actions[randomkey]
             else:
                 # TODO 7. Return action with highest q value
-                return self.valid_actions[action]
+                return action 
         elif self.testing:
             # TODO 7. choose action with highest q value
-            return self.valid_actions[action]
+            return action
         else:
             # TODO 6. Return random choose aciton
             return self.valid_actions[randomkey]
+    
+    def get_maxreward_action(self, next_state):
+        # print ("state:", state)
+        rewards = []
+        oldloc = self.maze.robot['loc']
+        
+        for action in self.valid_actions:
+            self.maze.robot['loc'] = next_state
+            reward = self.maze.move_robot(action)
+            rewards.append(reward)
+            
+        self.maze.robot['loc'] = oldloc   
+#         print ('rewards:',rewards)
+        max_reward = max(rewards)
+#         print ('max_reward:',max_reward)
+        return max_reward
 
     def update_Qtable(self, r, action, next_state):
         """
@@ -147,11 +171,11 @@ class Robot(object):
         return action, reward
 
 
-from Maze import Maze
-mymaze = Maze(maze_size=(8, 11), trap_number = 3)
+# from Maze import Maze
+# mymaze = Maze(maze_size=(8, 11), trap_number = 3)
 
-robot = Robot(mymaze)
-robot.set_status(learning=True,testing=False)
-print("test1:",robot.update())
+# robot = Robot(mymaze)
+# robot.set_status(learning=True,testing=False)
+# print("test1:",robot.update())
 
-print ("test2:",robot.Qtable)
+# print ("test2:",robot.Qtable)
