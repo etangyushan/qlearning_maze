@@ -35,12 +35,6 @@ class Robot(object):
         """
         self.learning = learning
         self.testing = testing
-        
-    def down_epsilon(self):
-        if ( self.epsilon > 0):
-            return self.epsilon - 0.01
-        else:
-            return 0
     
     def update_parameter(self):
         """
@@ -52,7 +46,7 @@ class Robot(object):
             self.epsilon = 0
         else:
             # TODO 2. Update parameters when learning
-            self.epsilon = self.down_epsilon()
+            self.epsilon = max(0, self.epsilon - 0.01)
 
         return self.epsilon
 
@@ -72,18 +66,7 @@ class Robot(object):
         # Qtable[state] ={'u':xx, 'd':xx, ...}
         # If Qtable[state] already exits, then do
         # not change it.
-        #  print ('1Qtable:',self.Qtable)
-        #  print ('1state:',state)
-        if (self.Qtable):
-            # print('keys:',self.Qtable.keys())
-            if (state not in self.Qtable.keys()):
-                self.Qtable[state] = {'u':0, 'd':0, 'r':0, 'l':0}    
-        else:
-            self.Qtable[state] = {'u':0, 'd':0, 'r':0, 'l':0}
-        #print ('2Qtable:',self.Qtable)
-        #print ('2state:',state)
-        #print ('2Qtable state:',self.Qtable[state])    
-
+        self.Qtable.setdefault(state, {a:0.0 for a in self.valid_actions})
 
     def choose_action(self):
         """
@@ -116,20 +99,8 @@ class Robot(object):
             return self.valid_actions[randomkey]
     
     def get_maxreward_action(self, next_state):
-        # print ("state:", state)
-        rewards = []
-        oldloc = self.maze.robot['loc']
-        
-        for action in self.valid_actions:
-            self.maze.robot['loc'] = next_state
-            reward = self.maze.move_robot(action)
-            rewards.append(reward)
-            
-        self.maze.robot['loc'] = oldloc   
-#         print ('rewards:',rewards)
-        max_reward = max(rewards)
-#         print ('max_reward:',max_reward)
-        return max_reward
+        # print ("next_state:", next_state)
+        return max(self.Qtable[next_state].values())
 
     def update_Qtable(self, r, action, next_state):
         """
